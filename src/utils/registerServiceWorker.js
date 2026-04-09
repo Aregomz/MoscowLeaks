@@ -3,14 +3,40 @@ export const registerAppServiceWorker = (audioUrls = []) => {
     return
   }
 
-  const warmAudioCache = (registration) => {
-    if (!registration?.active || !audioUrls.length) {
+  const shouldWarmUpAudio = () => {
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
+    if (!connection) {
+      return true
+    }
+
+    if (connection.saveData) {
+      return false
+    }
+
+    const effectiveType = connection.effectiveType || ''
+    return !effectiveType.includes('2g')
+  }
+
+  const scheduleWhenIdle = (callback) => {
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(callback, { timeout: 3500 })
       return
     }
 
-    registration.active.postMessage({
-      type: 'WARM_AUDIO_CACHE',
-      urls: audioUrls,
+    window.setTimeout(callback, 1500)
+  }
+
+  const warmAudioCache = (registration) => {
+    if (!registration?.active || !audioUrls.length || !shouldWarmUpAudio()) {
+      return
+    }
+
+    const warmUpTargets = audioUrls.slice(0, 2)
+    scheduleWhenIdle(() => {
+      registration.active.postMessage({
+        type: 'WARM_AUDIO_CACHE',
+        urls: warmUpTargets,
+      })
     })
   }
 

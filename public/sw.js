@@ -1,5 +1,5 @@
 const STATIC_CACHE = 'moscow-static-v1'
-const AUDIO_CACHE = 'moscow-audio-v2'
+const AUDIO_CACHE = 'moscow-audio-v3'
 
 const isCacheableResponse = (response) =>
   response && (response.ok || response.type === 'opaque')
@@ -11,6 +11,18 @@ const isAudioRequest = (request) => {
 
   const pathname = new URL(request.url).pathname.toLowerCase()
   return /\.(mp3|wav|aac|m4a|ogg)$/i.test(pathname)
+}
+
+const canCacheAudioResponse = (request, response) => {
+  if (!response || response.status !== 200) {
+    return false
+  }
+
+  if (request.headers.has('range')) {
+    return false
+  }
+
+  return isCacheableResponse(response)
 }
 
 self.addEventListener('install', (event) => {
@@ -77,6 +89,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isAudioRequest(request)) {
+    if (request.headers.has('range')) {
+      event.respondWith(fetch(request))
+      return
+    }
+
     event.respondWith(
       (async () => {
         const cache = await caches.open(AUDIO_CACHE)
@@ -86,7 +103,7 @@ self.addEventListener('fetch', (event) => {
         }
 
         const response = await fetch(request)
-        if (isCacheableResponse(response)) {
+        if (canCacheAudioResponse(request, response)) {
           event.waitUntil(cache.put(request, response.clone()))
         }
 
