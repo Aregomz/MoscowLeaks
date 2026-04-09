@@ -25,6 +25,91 @@ const canCacheAudioResponse = (request, response) => {
   return isCacheableResponse(response)
 }
 
+const parseRangeHeader = (rangeHeader, size) => {
+  const match = /bytes=(\d*)-(\d*)/i.exec(rangeHeader || '')
+  if (!match) {
+    return null
+  }
+
+  const startValue = match[1]
+  const endValue = match[2]
+
+  let start = startValue ? Number(startValue) : 0
+  let end = endValue ? Number(endValue) : size - 1
+
+  if (!Number.isFinite(start) || Number.isNaN(start)) {
+    return null
+  }
+
+  if (!Number.isFinite(end) || Number.isNaN(end) || end >= size) {
+    end = size - 1
+  }
+
+  if (start > end || start >= size) {
+    return null
+  }
+
+  return { start, end }
+}
+
+const respondFromCachedAudio = async (request, cache) => {
+  const cached = await cache.match(request.url)
+  if (!cached) {
+    return null
+  }
+
+  const rangeHeader = request.headers.get('range')
+  if (!rangeHeader) {
+    return cached
+  }
+
+  const arrayBuffer = await cached.arrayBuffer()
+  const size = arrayBuffer.byteLength
+  const range = parseRangeHeader(rangeHeader, size)
+  if (!range) {
+    return new Response(null, {
+      status: 416,
+      headers: {
+        'Content-Range': `bytes */${size}`,
+      },
+    })
+  }
+
+  const slicedBuffer = arrayBuffer.slice(range.start, range.end + 1)
+  const headers = new Headers(cached.headers)
+  headers.set('Content-Range', `bytes ${range.start}-${range.end}/${size}`)
+  headers.set('Content-Length', String(slicedBuffer.byteLength))
+  headers.set('Accept-Ranges', 'bytes')
+
+  return new Response(slicedBuffer, {
+    status: 206,
+    statusText: 'Partial Content',
+    headers,
+  })
+}
+
+const warmFullAudioInBackground = async (request, cache) => {
+  try {
+    const fullRequest = new Request(request.url, {
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'omit',
+    })
+
+    const alreadyCached = await cache.match(fullRequest)
+    if (alreadyCached) {
+      return
+    }
+
+    const response = await fetch(fullRequest)
+    if (canCacheAudioResponse(fullRequest, response)) {
+      await cache.put(fullRequest, response.clone())
+    }
+  } catch {
+    // Ignore background warm-up failures.
+  }
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(self.skipWaiting())
 })
@@ -89,17 +174,21 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isAudioRequest(request)) {
-    if (request.headers.has('range')) {
-      event.respondWith(fetch(request))
-      return
-    }
-
     event.respondWith(
       (async () => {
         const cache = await caches.open(AUDIO_CACHE)
-        const cached = await cache.match(request)
+        const cachedResponse = await respondFromCachedAudio(request, cache)
+        if (cachedResponse) {
+          return cachedResponse
+        }
+
+        const cached = await cache.match(request.url)
         if (cached) {
           return cached
+        }
+
+        if (request.headers.has('range')) {
+          event.waitUntil(warmFullAudioInBackground(request, cache))
         }
 
         const response = await fetch(request)
