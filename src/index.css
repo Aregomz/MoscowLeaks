@@ -1,0 +1,185 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	:root {
+		color-scheme: dark;
+	}
+
+	body {
+		margin: 0;
+		min-height: 100vh;
+		font-family: 'Rajdhani', sans-serif;
+		background:
+			radial-gradient(circle at 15% 20%, rgba(143, 143, 143, 0.18), transparent 38%),
+			radial-gradient(circle at 80% 10%, rgba(96, 96, 96, 0.2), transparent 35%),
+			linear-gradient(150deg, #090909 0%, #0f0f0f 45%, #151515 100%);
+		color: #e8e8e8;
+	}
+
+	#root {
+		min-height: 100vh;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+}
+
+@layer components {
+	.bg-noise {
+		background-image:
+			radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1px, transparent 0);
+		background-size: 18px 18px;
+		mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), transparent 92%);
+	}
+
+	.ray-burst {
+		background:
+			linear-gradient(108deg, transparent 0%, rgba(255, 255, 255, 0.06) 16%, transparent 24%),
+			linear-gradient(120deg, transparent 8%, rgba(255, 255, 255, 0.05) 18%, transparent 28%),
+			linear-gradient(132deg, transparent 14%, rgba(255, 255, 255, 0.04) 23%, transparent 34%),
+			linear-gradient(144deg, transparent 22%, rgba(255, 255, 255, 0.03) 31%, transparent 42%);
+		background-size: 140% 100%;
+		animation: ray-sweep 10s ease-in-out infinite;
+		transform-origin: center top;
+		filter: blur(2px);
+	}
+
+	.wave-wave {
+		animation: wave-drift 12s ease-in-out infinite;
+	}
+
+	.wave-two {
+		animation-delay: -4s;
+	}
+
+	.hero-logo {
+		animation: logo-float 8s ease-in-out infinite;
+	}
+
+	.liquid-player {
+		position: relative;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		background:
+			linear-gradient(120deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02) 36%, rgba(0, 0, 0, 0.2) 75%),
+			radial-gradient(circle at 18% -32%, rgba(255, 255, 255, 0.18), transparent 46%),
+			radial-gradient(circle at 80% 132%, rgba(255, 255, 255, 0.08), transparent 47%);
+		backdrop-filter: blur(18px) saturate(120%);
+		-webkit-backdrop-filter: blur(18px) saturate(120%);
+	}
+
+	.liquid-player::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.2),
+			inset 0 -20px 30px rgba(0, 0, 0, 0.12);
+		pointer-events: none;
+	}
+
+	.liquid-player__sheen {
+		position: absolute;
+		inset: -1px;
+		border-radius: inherit;
+		background: linear-gradient(110deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.06) 28%, transparent 48%);
+		opacity: 0.18;
+		mix-blend-mode: screen;
+		pointer-events: none;
+	}
+
+	.liquid-player__glow {
+		position: absolute;
+		left: 15%;
+		top: -72%;
+		height: 170%;
+		width: 46%;
+		background: radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, transparent 70%);
+		filter: blur(12px);
+		opacity: 0.26;
+		pointer-events: none;
+	}
+
+	.font-display {
+		font-family: 'Orbitron', sans-serif;
+	}
+
+	.metal-range {
+		appearance: none;
+		border-radius: 999px;
+		background: linear-gradient(90deg, #8f8f8f 0%, #525252 100%);
+		cursor: pointer;
+	}
+
+	.metal-range::-webkit-slider-runnable-track {
+		height: 100%;
+		border-radius: 999px;
+		background: linear-gradient(90deg, #8f8f8f 0%, #555555 100%);
+	}
+
+	.metal-range::-moz-range-track {
+		height: 100%;
+		border-radius: 999px;
+		background: linear-gradient(90deg, #8f8f8f 0%, #555555 100%);
+	}
+
+	.metal-range::-webkit-slider-thumb {
+		appearance: none;
+		margin-top: -6px;
+		height: 14px;
+		width: 14px;
+		border-radius: 999px;
+		border: 1px solid #2b2b2b;
+		background: #efefef;
+		box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
+	}
+
+	.metal-range::-moz-range-thumb {
+		height: 14px;
+		width: 14px;
+		border-radius: 999px;
+		border: 1px solid #2b2b2b;
+		background: #efefef;
+		box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
+	}
+
+	@keyframes wave-drift {
+		0%,
+		100% {
+			transform: translate3d(-2%, 0, 0) scale(1);
+		}
+
+		50% {
+			transform: translate3d(3%, -2%, 0) scale(1.06);
+		}
+	}
+
+	@keyframes ray-sweep {
+		0%,
+		100% {
+			transform: translate3d(-1%, 0, 0) skewX(-4deg);
+			opacity: 0.55;
+		}
+
+		50% {
+			transform: translate3d(1.5%, 1%, 0) skewX(4deg);
+			opacity: 0.8;
+		}
+	}
+
+	@keyframes logo-float {
+		0%,
+		100% {
+			transform: translateY(0) rotate(-1deg);
+		}
+
+		50% {
+			transform: translateY(-8px) rotate(1deg);
+		}
+	}
+}
