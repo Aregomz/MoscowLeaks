@@ -103,6 +103,15 @@ const ControlIcon = ({ name }) => {
     )
   }
 
+  if (name === 'loading') {
+    return (
+      <svg {...commonProps} className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" />
+        <path d="M12 3a9 9 0 0 1 9 9" />
+      </svg>
+    )
+  }
+
   return (
     <svg {...commonProps}>
       <path d="M8 5v14l11-7z" />
@@ -124,9 +133,12 @@ const HomePage = () => {
   const [volume, setVolume] = useState(0.8)
   const [isSeeking, setIsSeeking] = useState(false)
   const [seekValue, setSeekValue] = useState(0)
+  const [isBuffering, setIsBuffering] = useState(false)
 
   const howlRef = useRef(null)
+  const howlCacheRef = useRef(new Map())
   const autoplayRef = useRef(false)
+  const pendingPlayRef = useRef(false)
   const tickerRef = useRef(null)
   const volumeRef = useRef(volume)
   const seekRef = useRef(0)
@@ -158,13 +170,36 @@ const HomePage = () => {
     }, 250)
   }, [clearTicker, isSeeking])
 
+  const ensureHowl = useCallback((song) => {
+    if (!song) {
+      return null
+    }
+
+    const cachedHowl = howlCacheRef.current.get(song.url)
+    if (cachedHowl) {
+      return cachedHowl
+    }
+
+    const createdHowl = new Howl({
+      src: [song.url],
+      html5: false,
+      preload: true,
+      volume: volumeRef.current,
+    })
+
+    howlCacheRef.current.set(song.url, createdHowl)
+    return createdHowl
+  }, [])
+
   const goToTrack = useCallback((nextIndex, shouldPlay = true) => {
     setCurrentTime(0)
     setSeekValue(0)
     setDuration(songs[nextIndex]?.duration || 0)
     setIsPlaying(false)
+    setIsBuffering(shouldPlay)
     seekRef.current = 0
     autoplayRef.current = shouldPlay
+    pendingPlayRef.current = shouldPlay
     setActiveIndex(nextIndex)
   }, [])
 
@@ -184,61 +219,150 @@ const HomePage = () => {
     }
 
     clearTicker()
+    setIsPlaying(false)
     const previousHowl = howlRef.current
-    if (previousHowl) {
-      previousHowl.stop()
-      previousHowl.unload()
+    const newHowl = ensureHowl(activeSong)
+    if (!newHowl) {
+      return
     }
 
-    const newHowl = new Howl({
-      src: [activeSong.url],
-      html5: false,
-      preload: true,
-      volume: volumeRef.current,
-      onload: () => {
-        const loadedDuration = newHowl.duration()
-        if (Number.isFinite(loadedDuration) && loadedDuration > 0) {
-          setDuration(loadedDuration)
-        }
-      },
-      onplay: () => {
-        setIsPlaying(true)
-        startTicker()
-      },
-      onpause: () => {
-        setIsPlaying(false)
-      },
-      onstop: () => {
-        setIsPlaying(false)
-      },
-      onend: () => {
-        goToNext()
-      },
-      onloaderror: () => {
-        setIsPlaying(false)
-      },
-      onplayerror: () => {
-        setIsPlaying(false)
-      },
-    })
+    if (previousHowl && previousHowl !== newHowl) {
+      previousHowl.stop()
+    }
 
+    newHowl.volume(volumeRef.current)
     howlRef.current = newHowl
+
+    const syncDuration = () => {
+      const loadedDuration = newHowl.duration()
+      if (Number.isFinite(loadedDuration) && loadedDuration > 0) {
+        const nextDuration = Math.floor(loadedDuration)
+        setDuration(loadedDuration)
+        setTrackDurations((current) => {
+          if (current[activeSong.id] === nextDuration) {
+            return current
+          }
+
+          return {
+            ...current,
+            [activeSong.id]: nextDuration,
+          }
+        })
+      }
+    }
+
+    const handleLoad = () => {
+      syncDuration()
+
+      if (pendingPlayRef.current && howlRef.current === newHowl) {
+        pendingPlayRef.current = false
+        newHowl.play()
+      }
+    }
+
+    const handlePlay = () => {
+      setIsBuffering(false)
+      setIsPlaying(true)
+      startTicker()
+    }
+
+    const handlePause = () => {
+      setIsPlaying(false)
+      setIsBuffering(false)
+    }
+
+    const handleStop = () => {
+      setIsPlaying(false)
+      setIsBuffering(false)
+    }
+
+    const handleEnd = () => {
+      pendingPlayRef.current = false
+      goToNext()
+    }
+
+    const handleLoadError = () => {
+      pendingPlayRef.current = false
+      setIsPlaying(false)
+      setIsBuffering(false)
+    }
+
+    const handlePlayError = () => {
+      pendingPlayRef.current = false
+      setIsPlaying(false)
+      setIsBuffering(false)
+    }
+
+    newHowl.on('load', handleLoad)
+    newHowl.on('play', handlePlay)
+    newHowl.on('pause', handlePause)
+    newHowl.on('stop', handleStop)
+    newHowl.on('end', handleEnd)
+    newHowl.on('loaderror', handleLoadError)
+    newHowl.on('playerror', handlePlayError)
+
+    if (newHowl.state() === 'loaded') {
+      syncDuration()
+    }
 
     if (autoplayRef.current) {
       if (seekRef.current > 0) {
         newHowl.seek(seekRef.current)
       }
 
-      newHowl.play()
+      pendingPlayRef.current = true
+      setIsBuffering(newHowl.state() !== 'loaded')
+
+      if (newHowl.state() === 'loaded') {
+        pendingPlayRef.current = false
+        newHowl.play()
+      }
+    } else {
+      pendingPlayRef.current = false
+      setIsBuffering(false)
     }
 
     autoplayRef.current = false
 
     return () => {
       clearTicker()
-      newHowl.unload()
+      newHowl.off('load', handleLoad)
+      newHowl.off('play', handlePlay)
+      newHowl.off('pause', handlePause)
+      newHowl.off('stop', handleStop)
+      newHowl.off('end', handleEnd)
+      newHowl.off('loaderror', handleLoadError)
+      newHowl.off('playerror', handlePlayError)
     }
-  }, [activeSong, clearTicker, goToNext, startTicker])
+  }, [activeSong, clearTicker, ensureHowl, goToNext, startTicker])
+
+  useEffect(() => {
+    if (!songs.length) {
+      return
+    }
+
+    const nextIndexes = [
+      (activeIndex + 1) % songs.length,
+      (activeIndex + 2) % songs.length,
+    ]
+
+    const keepUrls = new Set([
+      songs[activeIndex]?.url,
+      ...nextIndexes.map((index) => songs[index]?.url),
+    ])
+
+    nextIndexes.forEach((index) => {
+      ensureHowl(songs[index])
+    })
+
+    howlCacheRef.current.forEach((cachedHowl, url) => {
+      if (!keepUrls.has(url)) {
+        cachedHowl.stop()
+        cachedHowl.unload()
+        howlCacheRef.current.delete(url)
+      }
+    })
+  }, [activeIndex, ensureHowl])
 
   useEffect(() => {
     const howl = howlRef.current
@@ -287,11 +411,11 @@ const HomePage = () => {
   useEffect(
     () => () => {
       clearTicker()
-      const howl = howlRef.current
-      if (howl) {
-        howl.stop()
-        howl.unload()
-      }
+      howlCacheRef.current.forEach((cachedHowl) => {
+        cachedHowl.stop()
+        cachedHowl.unload()
+      })
+      howlCacheRef.current.clear()
     },
     [clearTicker],
   )
@@ -302,7 +426,14 @@ const HomePage = () => {
       return
     }
 
+    if (isBuffering && !howl.playing()) {
+      pendingPlayRef.current = false
+      setIsBuffering(false)
+      return
+    }
+
     if (howl.playing()) {
+      pendingPlayRef.current = false
       howl.pause()
       clearTicker()
       return
@@ -312,8 +443,14 @@ const HomePage = () => {
       howl.seek(seekRef.current)
     }
 
-    howl.play()
-    startTicker()
+    pendingPlayRef.current = true
+    const isLoaded = howl.state() === 'loaded'
+    setIsBuffering(!isLoaded)
+
+    if (isLoaded) {
+      pendingPlayRef.current = false
+      howl.play()
+    }
   }
 
   const onSongClick = (index) => {
@@ -465,10 +602,10 @@ const HomePage = () => {
                   type="button"
                   onClick={togglePlay}
                   className="h-12 w-12 rounded-full bg-white text-xl text-black transition duration-300 hover:scale-[1.04] hover:bg-neutral-100"
-                  aria-label={isPlaying ? 'Pausar' : 'Reproducir'}
+                  aria-label={isBuffering ? 'Cargando' : isPlaying ? 'Pausar' : 'Reproducir'}
                 >
                     <span className="flex items-center justify-center">
-                      <ControlIcon name={isPlaying ? 'pause' : 'play'} />
+                      <ControlIcon name={isBuffering ? 'loading' : isPlaying ? 'pause' : 'play'} />
                     </span>
                 </button>
                 <button
