@@ -1,5 +1,5 @@
 const STATIC_CACHE = 'moscow-static-v1'
-const AUDIO_CACHE = 'moscow-audio-v1'
+const AUDIO_CACHE = 'moscow-audio-v2'
 
 const isCacheableResponse = (response) =>
   response && (response.ok || response.type === 'opaque')
@@ -87,7 +87,7 @@ self.addEventListener('fetch', (event) => {
 
         const response = await fetch(request)
         if (isCacheableResponse(response)) {
-          await cache.put(request, response.clone())
+          event.waitUntil(cache.put(request, response.clone()))
         }
 
         return response

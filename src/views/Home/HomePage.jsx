@@ -182,7 +182,7 @@ const HomePage = () => {
 
     const createdHowl = new Howl({
       src: [song.url],
-      html5: false,
+      html5: true,
       preload: true,
       volume: volumeRef.current,
     })
@@ -253,11 +253,6 @@ const HomePage = () => {
 
     const handleLoad = () => {
       syncDuration()
-
-      if (pendingPlayRef.current && howlRef.current === newHowl) {
-        pendingPlayRef.current = false
-        newHowl.play()
-      }
     }
 
     const handlePlay = () => {
@@ -311,12 +306,8 @@ const HomePage = () => {
       }
 
       pendingPlayRef.current = true
-      setIsBuffering(newHowl.state() !== 'loaded')
-
-      if (newHowl.state() === 'loaded') {
-        pendingPlayRef.current = false
-        newHowl.play()
-      }
+      setIsBuffering(true)
+      newHowl.play()
     } else {
       pendingPlayRef.current = false
       setIsBuffering(false)
@@ -428,6 +419,7 @@ const HomePage = () => {
 
     if (isBuffering && !howl.playing()) {
       pendingPlayRef.current = false
+      howl.stop()
       setIsBuffering(false)
       return
     }
@@ -444,13 +436,8 @@ const HomePage = () => {
     }
 
     pendingPlayRef.current = true
-    const isLoaded = howl.state() === 'loaded'
-    setIsBuffering(!isLoaded)
-
-    if (isLoaded) {
-      pendingPlayRef.current = false
-      howl.play()
-    }
+    setIsBuffering(true)
+    howl.play()
   }
 
   const onSongClick = (index) => {
