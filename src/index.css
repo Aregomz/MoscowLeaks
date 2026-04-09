@@ -34,7 +34,7 @@
 		background-image:
 			radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1px, transparent 0);
 		background-size: 18px 18px;
-		mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), transparent 92%);
+		mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.82) 70%, transparent 100%);
 	}
 
 	.ray-burst {
@@ -59,6 +59,92 @@
 
 	.hero-logo {
 		animation: logo-float 8s ease-in-out infinite;
+	}
+
+	.fire-bloom {
+		pointer-events: none;
+		background:
+			radial-gradient(circle, rgba(255, 140, 40, 0.35) 0%, rgba(255, 80, 10, 0.2) 38%, rgba(255, 40, 0, 0.08) 58%, transparent 74%);
+		filter: blur(18px);
+		opacity: 0;
+		mix-blend-mode: screen;
+		animation: fire-burst 15s cubic-bezier(0.28, 0.02, 0.18, 0.99) infinite;
+	}
+
+	.fire-bloom-b {
+		animation-delay: 4.3s;
+	}
+
+	.fire-bloom-c {
+		animation-delay: 8.6s;
+	}
+
+	.purple-lightning {
+		pointer-events: none;
+		background:
+			linear-gradient(180deg, rgba(255, 245, 255, 0.95) 0%, rgba(233, 192, 255, 0.92) 16%, rgba(174, 107, 255, 0.82) 54%, rgba(132, 66, 245, 0.66) 100%),
+			radial-gradient(circle at 52% 10%, rgba(255, 255, 255, 0.9), transparent 34%);
+		clip-path: polygon(
+			44% 0%,
+			58% 0%,
+			52% 14%,
+			63% 14%,
+			46% 30%,
+			57% 30%,
+			42% 48%,
+			56% 48%,
+			39% 69%,
+			53% 69%,
+			36% 100%,
+			46% 74%,
+			34% 74%,
+			49% 56%,
+			35% 56%,
+			50% 38%,
+			38% 38%,
+			54% 20%,
+			40% 20%
+		);
+		filter: blur(0.4px);
+		opacity: 0;
+		mix-blend-mode: screen;
+		transform-origin: top center;
+	}
+
+	.purple-lightning::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: inherit;
+		clip-path: inherit;
+		filter: blur(12px);
+		opacity: 0.78;
+	}
+
+	.purple-lightning::after {
+		content: '';
+		position: absolute;
+		left: 8%;
+		top: 24%;
+		height: 58%;
+		width: 84%;
+		background: linear-gradient(
+			180deg,
+			rgba(246, 218, 255, 0.84) 0%,
+			rgba(160, 94, 255, 0.7) 100%
+		);
+		clip-path: polygon(45% 0%, 58% 0%, 53% 18%, 63% 18%, 44% 44%, 54% 44%, 40% 74%, 49% 74%, 35% 100%, 45% 78%, 33% 78%, 47% 50%, 36% 50%, 50% 26%, 39% 26%);
+		filter: blur(0.9px);
+		opacity: 0.7;
+		transform: rotate(-26deg);
+	}
+
+	.purple-lightning-a {
+		animation: lightning-fall-a 14s cubic-bezier(0.26, 0.08, 0.22, 1) infinite;
+	}
+
+	.purple-lightning-b {
+		animation: lightning-fall-b 16s cubic-bezier(0.26, 0.08, 0.22, 1) infinite;
 	}
 
 	.liquid-player {
@@ -180,6 +266,108 @@
 
 		50% {
 			transform: translateY(-8px) rotate(1deg);
+		}
+	}
+
+	@keyframes fire-burst {
+		0%,
+		22%,
+		100% {
+			opacity: 0;
+			transform: scale(0.88);
+		}
+
+		6% {
+			opacity: 0.24;
+			transform: scale(1.02);
+		}
+
+		9% {
+			opacity: 0.42;
+			transform: scale(1.09);
+		}
+
+		13% {
+			opacity: 0.22;
+			transform: scale(1.03);
+		}
+
+		17% {
+			opacity: 0.35;
+			transform: scale(1.12);
+		}
+
+		21% {
+			opacity: 0.08;
+			transform: scale(0.96);
+		}
+	}
+
+	@keyframes lightning-fall-a {
+		0%,
+		24%,
+		100% {
+			opacity: 0;
+			transform: translate3d(-6px, -26px, 0) scaleY(0.7) scaleX(0.78);
+		}
+
+		26% {
+			opacity: 0.12;
+			transform: translate3d(4px, -10px, 0) scaleY(0.84) scaleX(0.9);
+		}
+
+		27.4% {
+			opacity: 0.48;
+			transform: translate3d(-3px, 24px, 0) scaleY(1.08) scaleX(1);
+		}
+
+		28.3% {
+			opacity: 0.24;
+			transform: translate3d(7px, 48px, 0) scaleY(1.12) scaleX(1.02);
+		}
+
+		29.1% {
+			opacity: 0.44;
+			transform: translate3d(-4px, 80px, 0) scaleY(1.2) scaleX(1.04);
+		}
+
+		30.4% {
+			opacity: 0;
+			transform: translate3d(9px, 114px, 0) scaleY(1.26) scaleX(1.06);
+		}
+	}
+
+	@keyframes lightning-fall-b {
+		0%,
+		56%,
+		100% {
+			opacity: 0;
+			transform: translate3d(5px, -22px, 0) scaleY(0.72) scaleX(0.82);
+		}
+
+		58% {
+			opacity: 0.12;
+			transform: translate3d(-2px, -4px, 0) scaleY(0.86) scaleX(0.9);
+		}
+
+		59.2% {
+			opacity: 0.46;
+			transform: translate3d(6px, 22px, 0) scaleY(1.04) scaleX(0.98);
+		}
+
+		60.1% {
+			opacity: 0.22;
+			transform: translate3d(-3px, 45px, 0) scaleY(1.1) scaleX(1.02);
+		}
+
+		61% {
+			opacity: 0.44;
+			transform: translate3d(8px, 77px, 0) scaleY(1.2) scaleX(1.06);
+		}
+
+		62.2% {
+			opacity: 0;
+			transform: translate3d(-5px, 110px, 0) scaleY(1.26) scaleX(1.08);
 		}
 	}
 }

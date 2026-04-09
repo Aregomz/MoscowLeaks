@@ -350,13 +350,19 @@ const HomePage = () => {
   return (
     <div className="min-h-screen overflow-hidden bg-[#0a0a0a] text-neutral-100">
       <div className="relative isolate min-h-screen">
-        <div className="bg-noise absolute inset-0 opacity-35" />
-        <div className="wave-wave wave-one absolute -left-24 top-8 h-72 w-[34rem] rounded-full bg-[radial-gradient(circle,_rgba(255,255,255,0.16)_0%,_rgba(255,255,255,0.06)_28%,_transparent_72%)] blur-3xl" />
-        <div className="wave-wave wave-two absolute right-[-10%] top-[-4%] h-[32rem] w-[32rem] rounded-full bg-[radial-gradient(circle,_rgba(180,180,180,0.12)_0%,_rgba(120,120,120,0.05)_32%,_transparent_72%)] blur-3xl" />
-        <div className="ray-burst absolute inset-x-0 top-0 h-[36rem] opacity-70" />
-        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+        <div className="pointer-events-none fixed inset-0 z-0">
+          <div className="bg-noise absolute inset-0 opacity-35" />
+          <div className="wave-wave wave-one absolute -left-24 top-8 h-72 w-[34rem] rounded-full bg-[radial-gradient(circle,_rgba(255,255,255,0.16)_0%,_rgba(255,255,255,0.06)_28%,_transparent_72%)] blur-3xl" />
+          <div className="wave-wave wave-two absolute right-[-10%] top-[-4%] h-[32rem] w-[32rem] rounded-full bg-[radial-gradient(circle,_rgba(180,180,180,0.12)_0%,_rgba(120,120,120,0.05)_32%,_transparent_72%)] blur-3xl" />
+          <div className="ray-burst absolute inset-0 opacity-70" />
+          <div className="fire-bloom fire-bloom-a absolute left-[6%] top-[10%] h-40 w-40 rounded-full" />
+          <div className="fire-bloom fire-bloom-b absolute right-[9%] top-[20%] h-48 w-48 rounded-full" />
+          <div className="fire-bloom fire-bloom-c absolute left-[52%] top-[42%] h-36 w-36 rounded-full" />
+          <div className="purple-lightning purple-lightning-a absolute left-[10%] top-2 h-[24rem] w-16" />
+          <div className="purple-lightning purple-lightning-b absolute right-[12%] top-10 h-[22rem] w-14" />
+        </div>
 
-        <main className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-64 pt-8 sm:px-6 lg:px-8">
+        <main className="relative z-[1] mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-64 pt-8 sm:px-6 lg:px-8">
           <section className="flex flex-1 flex-col items-center justify-start text-center">
             <div className="pointer-events-none mb-6 flex items-center justify-center">
               <img
